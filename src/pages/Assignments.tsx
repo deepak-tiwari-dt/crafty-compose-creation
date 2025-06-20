@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { useApp } from '@/context/AppContext';
+import { useSupabaseData } from '@/hooks/useSupabaseData';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -10,30 +10,28 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Plus, Trash2 } from 'lucide-react';
 
 const Assignments: React.FC = () => {
-  const { assignments, engineers, projects, addAssignment, deleteAssignment } = useApp();
+  const { assignments, profiles, projects, addAssignment, deleteAssignment, loading } = useSupabaseData();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newAssignment, setNewAssignment] = useState({
-    engineerId: '',
-    projectId: '',
-    allocationPercentage: 50,
-    startDate: '',
-    endDate: '',
+    engineer_id: '',
+    project_id: '',
+    allocation_percentage: 50,
+    start_date: '',
+    end_date: '',
     role: ''
   });
 
-  const handleAddAssignment = () => {
-    if (newAssignment.engineerId && newAssignment.projectId && newAssignment.role) {
-      addAssignment({
-        ...newAssignment,
-        startDate: new Date(newAssignment.startDate),
-        endDate: new Date(newAssignment.endDate)
-      });
+  const engineers = profiles.filter(p => p.role === 'engineer');
+
+  const handleAddAssignment = async () => {
+    if (newAssignment.engineer_id && newAssignment.project_id && newAssignment.role) {
+      await addAssignment(newAssignment);
       setNewAssignment({
-        engineerId: '',
-        projectId: '',
-        allocationPercentage: 50,
-        startDate: '',
-        endDate: '',
+        engineer_id: '',
+        project_id: '',
+        allocation_percentage: 50,
+        start_date: '',
+        end_date: '',
         role: ''
       });
       setIsDialogOpen(false);
@@ -41,12 +39,27 @@ const Assignments: React.FC = () => {
   };
 
   const getEngineerName = (engineerId: string) => {
-    return engineers.find(e => e.id === engineerId)?.name || 'Unknown';
+    return profiles.find(e => e.id === engineerId)?.name || 'Unknown';
   };
 
   const getProjectName = (projectId: string) => {
     return projects.find(p => p.id === projectId)?.name || 'Unknown';
   };
+
+  if (loading) {
+    return (
+      <div className="px-4 py-6 sm:px-0">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
+          <div className="space-y-4">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="h-24 bg-gray-200 rounded"></div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="px-4 py-6 sm:px-0">
@@ -67,7 +80,7 @@ const Assignments: React.FC = () => {
               <DialogTitle>Create New Assignment</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
-              <Select value={newAssignment.engineerId} onValueChange={(value) => setNewAssignment({ ...newAssignment, engineerId: value })}>
+              <Select value={newAssignment.engineer_id} onValueChange={(value) => setNewAssignment({ ...newAssignment, engineer_id: value })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select engineer" />
                 </SelectTrigger>
@@ -80,7 +93,7 @@ const Assignments: React.FC = () => {
                 </SelectContent>
               </Select>
 
-              <Select value={newAssignment.projectId} onValueChange={(value) => setNewAssignment({ ...newAssignment, projectId: value })}>
+              <Select value={newAssignment.project_id} onValueChange={(value) => setNewAssignment({ ...newAssignment, project_id: value })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select project" />
                 </SelectTrigger>
@@ -101,28 +114,28 @@ const Assignments: React.FC = () => {
 
               <div>
                 <label className="block text-sm font-medium mb-2">
-                  Allocation Percentage: {newAssignment.allocationPercentage}%
+                  Allocation Percentage: {newAssignment.allocation_percentage}%
                 </label>
                 <Input
                   type="range"
                   min="10"
                   max="100"
                   step="10"
-                  value={newAssignment.allocationPercentage}
-                  onChange={(e) => setNewAssignment({ ...newAssignment, allocationPercentage: parseInt(e.target.value) })}
+                  value={newAssignment.allocation_percentage}
+                  onChange={(e) => setNewAssignment({ ...newAssignment, allocation_percentage: parseInt(e.target.value) })}
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <Input
                   type="date"
-                  value={newAssignment.startDate}
-                  onChange={(e) => setNewAssignment({ ...newAssignment, startDate: e.target.value })}
+                  value={newAssignment.start_date}
+                  onChange={(e) => setNewAssignment({ ...newAssignment, start_date: e.target.value })}
                 />
                 <Input
                   type="date"
-                  value={newAssignment.endDate}
-                  onChange={(e) => setNewAssignment({ ...newAssignment, endDate: e.target.value })}
+                  value={newAssignment.end_date}
+                  onChange={(e) => setNewAssignment({ ...newAssignment, end_date: e.target.value })}
                 />
               </div>
 
@@ -140,8 +153,8 @@ const Assignments: React.FC = () => {
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 <div>
-                  <span>{getEngineerName(assignment.engineerId)}</span>
-                  <span className="text-gray-500 font-normal ml-2">→ {getProjectName(assignment.projectId)}</span>
+                  <span>{getEngineerName(assignment.engineer_id)}</span>
+                  <span className="text-gray-500 font-normal ml-2">→ {getProjectName(assignment.project_id)}</span>
                 </div>
                 <Button
                   variant="ghost"
@@ -161,15 +174,15 @@ const Assignments: React.FC = () => {
                 </div>
                 <div>
                   <p className="text-sm font-medium">Allocation</p>
-                  <Badge variant="secondary">{assignment.allocationPercentage}%</Badge>
+                  <Badge variant="secondary">{assignment.allocation_percentage}%</Badge>
                 </div>
                 <div>
                   <p className="text-sm font-medium">Start Date</p>
-                  <p className="text-sm text-gray-600">{assignment.startDate.toLocaleDateString()}</p>
+                  <p className="text-sm text-gray-600">{assignment.start_date}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium">End Date</p>
-                  <p className="text-sm text-gray-600">{assignment.endDate.toLocaleDateString()}</p>
+                  <p className="text-sm text-gray-600">{assignment.end_date}</p>
                 </div>
               </div>
             </CardContent>

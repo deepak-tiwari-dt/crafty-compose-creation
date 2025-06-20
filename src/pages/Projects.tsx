@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
-import { useApp } from '@/context/AppContext';
+import { useSupabaseData } from '@/hooks/useSupabaseData';
+import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -11,48 +12,52 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Plus } from 'lucide-react';
 
 const Projects: React.FC = () => {
-  const { projects, addProject } = useApp();
+  const { projects, addProject, loading } = useSupabaseData();
+  const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newProject, setNewProject] = useState({
     name: '',
     description: '',
-    startDate: '',
-    endDate: '',
-    requiredSkills: [] as string[],
-    teamSize: 1,
+    start_date: '',
+    end_date: '',
+    required_skills: [] as string[],
+    team_size: 1,
     status: 'planning' as const
   });
 
   const filteredProjects = projects.filter(project =>
     project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    project.requiredSkills.some(skill => skill.toLowerCase().includes(searchTerm.toLowerCase()))
+    project.required_skills.some(skill => skill.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  const handleAddProject = () => {
+  const handleAddProject = async () => {
     if (newProject.name && newProject.description) {
-      addProject({
+      await addProject({
         ...newProject,
-        startDate: new Date(newProject.startDate),
-        endDate: new Date(newProject.endDate),
-        managerId: 'manager1'
+        manager_id: user?.id,
       });
       setNewProject({
         name: '',
         description: '',
-        startDate: '',
-        endDate: '',
-        requiredSkills: [],
-        teamSize: 1,
+        start_date: '',
+        end_date: '',
+        required_skills: [],
+        team_size: 1,
         status: 'planning'
       });
       setIsDialogOpen(false);
     }
   };
 
+  const handleSkillsChange = (skillsString: string) => {
+    const skills = skillsString.split(',').map(s => s.trim()).filter(s => s.length > 0);
+    setNewProject({ ...newProject, required_skills: skills });
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
-      case '10':
+      case 'active':
         return 'default';
       case 'planning':
         return 'secondary';
@@ -62,6 +67,21 @@ const Projects: React.FC = () => {
         return 'secondary';
     }
   };
+
+  if (loading) {
+    return (
+      <div className="px-4 py-6 sm:px-0">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="h-64 bg-gray-200 rounded"></div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="px-4 py-6 sm:px-0">
@@ -92,23 +112,28 @@ const Projects: React.FC = () => {
                 value={newProject.description}
                 onChange={(e) => setNewProject({ ...newProject, description: e.target.value })}
               />
+              <Input
+                placeholder="Required skills (comma-separated)"
+                value={newProject.required_skills.join(', ')}
+                onChange={(e) => handleSkillsChange(e.target.value)}
+              />
               <div className="grid grid-cols-2 gap-4">
                 <Input
                   type="date"
-                  value={newProject.startDate}
-                  onChange={(e) => setNewProject({ ...newProject, startDate: e.target.value })}
+                  value={newProject.start_date}
+                  onChange={(e) => setNewProject({ ...newProject, start_date: e.target.value })}
                 />
                 <Input
                   type="date"
-                  value={newProject.endDate}
-                  onChange={(e) => setNewProject({ ...newProject, endDate: e.target.value })}
+                  value={newProject.end_date}
+                  onChange={(e) => setNewProject({ ...newProject, end_date: e.target.value })}
                 />
               </div>
               <Input
                 type="number"
                 placeholder="Team size"
-                value={newProject.teamSize}
-                onChange={(e) => setNewProject({ ...newProject, teamSize: parseInt(e.target.value) })}
+                value={newProject.team_size}
+                onChange={(e) => setNewProject({ ...newProject, team_size: parseInt(e.target.value) })}
               />
               <Select value={newProject.status} onValueChange={(value: any) => setNewProject({ ...newProject, status: value })}>
                 <SelectTrigger>
@@ -154,7 +179,7 @@ const Projects: React.FC = () => {
               <div>
                 <p className="text-sm font-medium mb-2">Required Skills</p>
                 <div className="flex flex-wrap gap-1">
-                  {project.requiredSkills.map((skill) => (
+                  {project.required_skills.map((skill) => (
                     <Badge key={skill} variant="outline" className="text-xs">
                       {skill}
                     </Badge>
@@ -165,16 +190,16 @@ const Projects: React.FC = () => {
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <p className="font-medium">Start Date</p>
-                  <p className="text-gray-500">{project.startDate.toLocaleDateString()}</p>
+                  <p className="text-gray-500">{project.start_date}</p>
                 </div>
                 <div>
                   <p className="font-medium">End Date</p>
-                  <p className="text-gray-500">{project.endDate.toLocaleDateString()}</p>
+                  <p className="text-gray-500">{project.end_date}</p>
                 </div>
               </div>
 
               <div>
-                <p className="text-sm font-medium">Team Size: {project.teamSize}</p>
+                <p className="text-sm font-medium">Team Size: {project.team_size}</p>
               </div>
             </CardContent>
           </Card>

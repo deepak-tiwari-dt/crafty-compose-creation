@@ -9,7 +9,146 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      assignments: {
+        Row: {
+          allocation_percentage: number
+          created_at: string | null
+          end_date: string
+          engineer_id: string | null
+          id: string
+          project_id: string | null
+          role: string
+          start_date: string
+          updated_at: string | null
+        }
+        Insert: {
+          allocation_percentage?: number
+          created_at?: string | null
+          end_date: string
+          engineer_id?: string | null
+          id?: string
+          project_id?: string | null
+          role: string
+          start_date: string
+          updated_at?: string | null
+        }
+        Update: {
+          allocation_percentage?: number
+          created_at?: string | null
+          end_date?: string
+          engineer_id?: string | null
+          id?: string
+          project_id?: string | null
+          role?: string
+          start_date?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assignments_engineer_id_fkey"
+            columns: ["engineer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assignments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string | null
+          department: string | null
+          email: string
+          id: string
+          max_capacity: number | null
+          name: string
+          role: Database["public"]["Enums"]["user_role"]
+          seniority: Database["public"]["Enums"]["seniority_level"] | null
+          skills: string[] | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          department?: string | null
+          email: string
+          id: string
+          max_capacity?: number | null
+          name: string
+          role?: Database["public"]["Enums"]["user_role"]
+          seniority?: Database["public"]["Enums"]["seniority_level"] | null
+          skills?: string[] | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          department?: string | null
+          email?: string
+          id?: string
+          max_capacity?: number | null
+          name?: string
+          role?: Database["public"]["Enums"]["user_role"]
+          seniority?: Database["public"]["Enums"]["seniority_level"] | null
+          skills?: string[] | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      projects: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          end_date: string
+          id: string
+          manager_id: string | null
+          name: string
+          required_skills: string[] | null
+          start_date: string
+          status: Database["public"]["Enums"]["project_status"]
+          team_size: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          end_date: string
+          id?: string
+          manager_id?: string | null
+          name: string
+          required_skills?: string[] | null
+          start_date: string
+          status?: Database["public"]["Enums"]["project_status"]
+          team_size?: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          end_date?: string
+          id?: string
+          manager_id?: string | null
+          name?: string
+          required_skills?: string[] | null
+          start_date?: string
+          status?: Database["public"]["Enums"]["project_status"]
+          team_size?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projects_manager_id_fkey"
+            columns: ["manager_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -18,7 +157,9 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      project_status: "planning" | "active" | "completed"
+      seniority_level: "junior" | "mid" | "senior"
+      user_role: "manager" | "engineer"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -133,6 +274,10 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      project_status: ["planning", "active", "completed"],
+      seniority_level: ["junior", "mid", "senior"],
+      user_role: ["manager", "engineer"],
+    },
   },
 } as const
