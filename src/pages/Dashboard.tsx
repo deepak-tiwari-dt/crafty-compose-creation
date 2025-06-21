@@ -1,267 +1,244 @@
-
 import React from 'react';
-import { useAuth } from '@/hooks/useAuth';
 import { useSupabaseData } from '@/hooks/useSupabaseData';
+import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Users, FolderOpen, Calendar, TrendingUp, LogOut } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
+import { Users, FolderOpen, Calendar, TrendingUp, Activity, Award, Zap, User } from 'lucide-react';
 import TeamAnalytics from '@/components/TeamAnalytics';
 
 const Dashboard: React.FC = () => {
-  const { user, signOut } = useAuth();
-  const { profiles, projects, assignments, currentProfile, loading } = useSupabaseData();
-
-  const getEngineerCapacity = (engineerId: string) => {
-    const engineer = profiles.find(e => e.id === engineerId);
-    if (!engineer) return { allocated: 0, available: 100 };
-    
-    const engineerAssignments = assignments.filter(a => a.engineer_id === engineerId);
-    const totalAllocated = engineerAssignments.reduce((sum, a) => sum + a.allocation_percentage, 0);
-    
-    return {
-      allocated: totalAllocated,
-      available: (engineer.max_capacity || 100) - totalAllocated
-    };
-  };
+  const { currentProfile, profiles, projects, assignments, loading } = useSupabaseData();
+  const { user } = useAuth();
 
   if (loading) {
     return (
-      <div className="px-4 py-6 sm:px-0">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="h-24 bg-gray-200 rounded"></div>
-            ))}
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 flex items-center justify-center">
+        <div className="animate-pulse flex flex-col items-center space-y-6">
+          <div className="w-20 h-20 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full animate-bounce"></div>
+          <div className="text-gray-500 text-lg">Loading your dashboard...</div>
+          <div className="flex space-x-2">
+            <div className="w-3 h-3 bg-blue-400 rounded-full animate-pulse"></div>
+            <div className="w-3 h-3 bg-purple-400 rounded-full animate-pulse" style={{animationDelay: '0.2s'}}></div>
+            <div className="w-3 h-3 bg-pink-400 rounded-full animate-pulse" style={{animationDelay: '0.4s'}}></div>
           </div>
         </div>
       </div>
     );
   }
 
-  if (currentProfile?.role === 'manager') {
-    const activeProjects = projects.filter(p => p.status === 'active').length;
-    const totalEngineers = profiles.filter(p => p.role === 'engineer').length;
-    const totalAssignments = assignments.length;
-    
-    const engineersWithCapacity = profiles.filter(p => p.role === 'engineer').map(engineer => {
-      const capacity = getEngineerCapacity(engineer.id);
-      return {
-        ...engineer,
-        capacity
-      };
-    });
+  const engineers = profiles.filter(p => p.role === 'engineer');
+  const activeProjects = projects.filter(p => p.status === 'active');
+  const totalAssignments = assignments.length;
 
-    const overutilizedEngineers = engineersWithCapacity.filter(e => e.capacity.allocated > (e.max_capacity || 100)).length;
+  const getCapacityStats = () => {
+    const totalCapacity = engineers.reduce((sum, eng) => sum + (eng.max_capacity || 100), 0);
+    const allocatedCapacity = assignments.reduce((sum, assignment) => {
+      return sum + assignment.allocation_percentage;
+    }, 0);
+    return { total: totalCapacity, allocated: allocatedCapacity };
+  };
 
-    return (
-      <div className="px-4 py-6 sm:px-0">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Manager Dashboard</h1>
-            <p className="text-gray-600">Overview of your engineering team and projects</p>
-          </div>
-        </div>
+  const capacityStats = getCapacityStats();
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Engineers</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{totalEngineers}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Projects</CardTitle>
-              <FolderOpen className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{activeProjects}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Assignments</CardTitle>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{totalAssignments}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Overutilized</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-red-600">{overutilizedEngineers}</div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Team Capacity Overview */}
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle>Team Capacity Overview</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {engineersWithCapacity.map((engineer) => (
-                <div key={engineer.id} className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    <div>
-                      <p className="font-medium">{engineer.name}</p>
-                      <p className="text-sm text-gray-500">{engineer.department} • {engineer.seniority}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-4">
-                    <div className="w-48">
-                      <Progress 
-                        value={(engineer.capacity.allocated / (engineer.max_capacity || 100)) * 100} 
-                        className="h-2"
-                      />
-                    </div>
-                    <div className="text-sm text-gray-500 min-w-0 w-20">
-                      {engineer.capacity.allocated}% allocated
-                    </div>
-                    {engineer.capacity.allocated > (engineer.max_capacity || 100) && (
-                      <Badge variant="destructive">Overloaded</Badge>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Analytics Charts */}
-        <TeamAnalytics profiles={profiles} assignments={assignments} />
-
-        {/* Active Projects */}
-        <Card className="mt-8">
-          <CardHeader>
-            <CardTitle>Active Projects</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {projects.filter(p => p.status === 'active').map((project) => (
-                <div key={project.id} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div>
-                    <h3 className="font-medium">{project.name}</h3>
-                    <p className="text-sm text-gray-500">{project.description}</p>
-                    <div className="flex items-center space-x-2 mt-2">
-                      {project.required_skills.map((skill) => (
-                        <Badge key={skill} variant="secondary">{skill}</Badge>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm text-gray-500">Team Size: {project.team_size}</p>
-                    <Badge variant={project.status === 'active' ? 'default' : 'secondary'}>
-                      {project.status}
-                    </Badge>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  // Engineer Dashboard
-  const engineerAssignments = assignments.filter(a => a.engineer_id === currentProfile?.id);
-  const capacity = getEngineerCapacity(currentProfile?.id || '');
+  const getSeniorityColor = (seniority: string) => {
+    switch (seniority) {
+      case 'senior': return 'from-purple-500 to-pink-500';
+      case 'mid': return 'from-blue-500 to-cyan-500';
+      default: return 'from-green-500 to-emerald-500';
+    }
+  };
 
   return (
-    <div className="px-4 py-6 sm:px-0">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">My Dashboard</h1>
-          <p className="text-gray-600">Your current assignments and capacity</p>
-        </div>
-      </div>
-
-      {/* Personal Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <Card>
-          <CardHeader>
-            <CardTitle>Current Capacity</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <Progress value={(capacity.allocated / (currentProfile?.max_capacity || 100)) * 100} />
-              <p className="text-sm text-gray-500">
-                {capacity.allocated}% of {currentProfile?.max_capacity}% capacity
-              </p>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 px-6 py-8">
+      <div className="max-w-7xl mx-auto space-y-8">
+        {/* Header Section */}
+        <div className="text-center space-y-4 animate-fade-in">
+          <div className="relative inline-block">
+            <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full p-1 animate-pulse">
+              <div className="w-full h-full bg-white rounded-full flex items-center justify-center">
+                <Activity className="w-8 h-8 text-gray-600" />
+              </div>
             </div>
-          </CardContent>
-        </Card>
+            <div className="absolute -top-2 -right-2 bg-green-500 w-6 h-6 rounded-full flex items-center justify-center">
+              <div className="w-2 h-2 bg-white rounded-full animate-ping"></div>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
+              Welcome back, {currentProfile?.name}!
+            </h1>
+            <p className="text-gray-600 text-lg">
+              {currentProfile?.role === 'manager' ? 'Engineering Team Overview' : 'Your Personal Dashboard'}
+            </p>
+            <Badge 
+              className="bg-gradient-to-r from-blue-500 to-purple-500 text-white border-0 px-4 py-1"
+            >
+              {currentProfile?.role} • {currentProfile?.department}
+            </Badge>
+          </div>
+        </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Active Assignments</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{engineerAssignments.length}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Skills</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-2">
-              {currentProfile?.skills?.map((skill) => (
-                <Badge key={skill} variant="secondary">{skill}</Badge>
+        {currentProfile?.role === 'manager' ? (
+          <>
+            {/* Manager Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {[
+                {
+                  title: 'Total Engineers',
+                  value: engineers.length,
+                  icon: Users,
+                  color: 'from-blue-500 to-cyan-500',
+                  bgColor: 'bg-blue-100',
+                  textColor: 'text-blue-600'
+                },
+                {
+                  title: 'Active Projects',
+                  value: activeProjects.length,
+                  icon: FolderOpen,
+                  color: 'from-green-500 to-emerald-500',
+                  bgColor: 'bg-green-100',
+                  textColor: 'text-green-600'
+                },
+                {
+                  title: 'Total Assignments',
+                  value: totalAssignments,
+                  icon: Calendar,
+                  color: 'from-purple-500 to-pink-500',
+                  bgColor: 'bg-purple-100',
+                  textColor: 'text-purple-600'
+                },
+                {
+                  title: 'Team Capacity',
+                  value: `${Math.round((capacityStats.allocated / capacityStats.total) * 100)}%`,
+                  icon: TrendingUp,
+                  color: 'from-orange-500 to-red-500',
+                  bgColor: 'bg-orange-100',
+                  textColor: 'text-orange-600'
+                }
+              ].map((stat, index) => (
+                <Card 
+                  key={stat.title} 
+                  className="group hover:shadow-xl transition-all duration-500 border-0 shadow-lg bg-white/80 backdrop-blur-sm animate-fade-in transform hover:scale-105"
+                  style={{ animationDelay: `${index * 100}ms` }}
+                >
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-2">
+                        <p className="text-sm font-medium text-gray-500">{stat.title}</p>
+                        <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
+                      </div>
+                      <div className={`p-3 ${stat.bgColor} rounded-xl group-hover:scale-110 transition-transform duration-300`}>
+                        <stat.icon className={`w-6 h-6 ${stat.textColor}`} />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               ))}
             </div>
-          </CardContent>
-        </Card>
-      </div>
 
-      {/* Current Assignments */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Current Assignments</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {engineerAssignments.map((assignment) => {
-              const project = projects.find(p => p.id === assignment.project_id);
-              return (
-                <div key={assignment.id} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div>
-                    <h3 className="font-medium">{project?.name}</h3>
-                    <p className="text-sm text-gray-500">{project?.description}</p>
-                    <p className="text-sm text-gray-500">Role: {assignment.role}</p>
+            {/* Team Analytics */}
+            <Card className="shadow-xl border-0 bg-white/90 backdrop-blur-sm animate-fade-in">
+              <CardHeader className="border-b border-gray-100 bg-gradient-to-r from-gray-50 to-gray-100">
+                <CardTitle className="flex items-center space-x-3">
+                  <div className="p-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg">
+                    <TrendingUp className="w-5 h-5 text-white" />
                   </div>
-                  <div className="text-right">
-                    <p className="font-medium">{assignment.allocation_percentage}% allocation</p>
-                    <p className="text-sm text-gray-500">
-                      {assignment.start_date} - {assignment.end_date}
-                    </p>
+                  <span className="text-xl">Team Analytics</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-8">
+                <TeamAnalytics />
+              </CardContent>
+            </Card>
+          </>
+        ) : (
+          <>
+            {/* Engineer Personal Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {[
+                {
+                  title: 'My Assignments',
+                  value: assignments.filter(a => a.engineer_id === user?.id).length,
+                  icon: Calendar,
+                  color: 'from-blue-500 to-cyan-500'
+                },
+                {
+                  title: 'Current Allocation',
+                  value: `${assignments.filter(a => a.engineer_id === user?.id).reduce((sum, a) => sum + a.allocation_percentage, 0)}%`,
+                  icon: Activity,
+                  color: 'from-green-500 to-emerald-500'
+                },
+                {
+                  title: 'Skills Count',
+                  value: currentProfile?.skills?.length || 0,
+                  icon: Award,
+                  color: 'from-purple-500 to-pink-500'
+                }
+              ].map((stat, index) => (
+                <Card 
+                  key={stat.title} 
+                  className="group hover:shadow-xl transition-all duration-500 border-0 shadow-lg bg-white/80 backdrop-blur-sm animate-fade-in transform hover:scale-105"
+                  style={{ animationDelay: `${index * 100}ms` }}
+                >
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-2">
+                        <p className="text-sm font-medium text-gray-500">{stat.title}</p>
+                        <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
+                      </div>
+                      <div className={`p-3 bg-gradient-to-r ${stat.color} rounded-xl`}>
+                        <stat.icon className="w-6 h-6 text-white" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            {/* My Current Assignments */}
+            <Card className="shadow-xl border-0 bg-white/90 backdrop-blur-sm animate-fade-in">
+              <CardHeader className="border-b border-gray-100 bg-gradient-to-r from-gray-50 to-gray-100">
+                <CardTitle className="flex items-center space-x-3">
+                  <div className="p-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg">
+                    <User className="w-5 h-5 text-white" />
                   </div>
+                  <span className="text-xl">My Current Assignments</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-8">
+                <div className="space-y-4">
+                  {assignments.filter(a => a.engineer_id === user?.id).map((assignment, index) => {
+                    const project = projects.find(p => p.id === assignment.project_id);
+                    return (
+                      <div 
+                        key={assignment.id} 
+                        className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors animate-fade-in"
+                        style={{ animationDelay: `${index * 100}ms` }}
+                      >
+                        <div className="space-y-1">
+                          <p className="font-semibold text-gray-900">{project?.name}</p>
+                          <p className="text-sm text-gray-500">{assignment.role}</p>
+                        </div>
+                        <Badge className="bg-gradient-to-r from-blue-500 to-purple-500 text-white border-0">
+                          {assignment.allocation_percentage}%
+                        </Badge>
+                      </div>
+                    );
+                  })}
+                  {assignments.filter(a => a.engineer_id === user?.id).length === 0 && (
+                    <div className="text-center py-12">
+                      <Zap className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                      <p className="text-gray-500">No current assignments</p>
+                      <p className="text-sm text-gray-400">You're available for new projects!</p>
+                    </div>
+                  )}
                 </div>
-              );
-            })}
-            {engineerAssignments.length === 0 && (
-              <p className="text-gray-500 text-center py-8">No current assignments</p>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+              </CardContent>
+            </Card>
+          </>
+        )}
+      </div>
     </div>
   );
 };
