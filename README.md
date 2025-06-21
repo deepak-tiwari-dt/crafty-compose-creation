@@ -3,7 +3,7 @@
 
 A modern, full-stack web application for managing engineering teams, projects, and resource allocation. Built with React, TypeScript, Supabase, and enhanced with beautiful animations and responsive design.
 
-![ERM System Dashboard](https://via.placeholder.com/800x400/6366f1/ffffff?text=ERM+System+Dashboard)
+![ERM System Dashboard]()
 
 ## 🚀 Live Demo
 
