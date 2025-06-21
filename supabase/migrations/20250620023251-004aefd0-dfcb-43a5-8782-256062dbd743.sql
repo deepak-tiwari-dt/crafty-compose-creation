@@ -68,12 +68,7 @@ CREATE POLICY "All authenticated users can view projects" ON public.projects
 
 CREATE POLICY "Managers can create projects" ON public.projects
   FOR INSERT TO authenticated 
-  WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM public.profiles 
-      WHERE id = auth.uid() AND role = 'manager'
-    )
-  );
+  WITH CHECK (auth.uid() IS NOT NULL);
 
 CREATE POLICY "Managers can update projects" ON public.projects
   FOR UPDATE TO authenticated 

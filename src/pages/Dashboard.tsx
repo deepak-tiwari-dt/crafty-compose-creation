@@ -148,7 +148,7 @@ const Dashboard: React.FC = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-8">
-                <TeamAnalytics />
+                <TeamAnalytics profiles={profiles} assignments={assignments} />
               </CardContent>
             </Card>
           </>
