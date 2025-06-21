@@ -20,7 +20,7 @@ const Profile: React.FC = () => {
     name: currentProfile?.name || '',
     department: currentProfile?.department || '',
     skills: currentProfile?.skills?.join(', ') || '',
-    seniority: currentProfile?.seniority || 'junior',
+    seniority: currentProfile?.seniority || 'junior' as 'junior' | 'mid' | 'senior',
     max_capacity: currentProfile?.max_capacity || 100
   });
 
@@ -131,7 +131,12 @@ const Profile: React.FC = () => {
             <div>
               <Label htmlFor="seniority">Seniority Level</Label>
               {isEditing ? (
-                <Select value={profileData.seniority} onValueChange={(value) => setProfileData({ ...profileData, seniority: value })}>
+                <Select 
+                  value={profileData.seniority} 
+                  onValueChange={(value: 'junior' | 'mid' | 'senior') => 
+                    setProfileData({ ...profileData, seniority: value })
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
