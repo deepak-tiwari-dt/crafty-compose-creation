@@ -10,6 +10,8 @@ import Dashboard from "./pages/Dashboard";
 import Engineers from "./pages/Engineers";
 import Projects from "./pages/Projects";
 import Assignments from "./pages/Assignments";
+import MyAssignments from "./pages/MyAssignments";
+import Profile from "./pages/Profile";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -56,14 +58,14 @@ const App = () => (
             <Route path="/my-assignments" element={
               <ProtectedRoute>
                 <Layout>
-                  <Dashboard />
+                  <MyAssignments />
                 </Layout>
               </ProtectedRoute>
             } />
             <Route path="/profile" element={
               <ProtectedRoute>
                 <Layout>
-                  <Dashboard />
+                  <Profile />
                 </Layout>
               </ProtectedRoute>
             } />

@@ -7,6 +7,7 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Users, FolderOpen, Calendar, TrendingUp, LogOut } from 'lucide-react';
+import TeamAnalytics from '@/components/TeamAnalytics';
 
 const Dashboard: React.FC = () => {
   const { user, signOut } = useAuth();
@@ -62,10 +63,6 @@ const Dashboard: React.FC = () => {
             <h1 className="text-3xl font-bold text-gray-900">Manager Dashboard</h1>
             <p className="text-gray-600">Overview of your engineering team and projects</p>
           </div>
-          <Button variant="outline" onClick={signOut}>
-            <LogOut className="h-4 w-4 mr-2" />
-            Sign Out
-          </Button>
         </div>
 
         {/* Stats Cards */}
@@ -146,8 +143,11 @@ const Dashboard: React.FC = () => {
           </CardContent>
         </Card>
 
+        {/* Analytics Charts */}
+        <TeamAnalytics profiles={profiles} assignments={assignments} />
+
         {/* Active Projects */}
-        <Card>
+        <Card className="mt-8">
           <CardHeader>
             <CardTitle>Active Projects</CardTitle>
           </CardHeader>
@@ -190,10 +190,6 @@ const Dashboard: React.FC = () => {
           <h1 className="text-3xl font-bold text-gray-900">My Dashboard</h1>
           <p className="text-gray-600">Your current assignments and capacity</p>
         </div>
-        <Button variant="outline" onClick={signOut}>
-          <LogOut className="h-4 w-4 mr-2" />
-          Sign Out
-        </Button>
       </div>
 
       {/* Personal Stats */}
