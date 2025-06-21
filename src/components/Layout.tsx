@@ -1,7 +1,8 @@
 
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { useApp } from '@/context/AppContext';
+import { useAuth } from '@/hooks/useAuth';
+import { useSupabaseData } from '@/hooks/useSupabaseData';
 import { Button } from '@/components/ui/button';
 import { Users, FolderOpen, Calendar, User, LogOut } from 'lucide-react';
 
@@ -10,70 +11,26 @@ interface LayoutProps {
 }
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
-  const { currentUser, setCurrentUser } = useApp();
+  const { user, signOut } = useAuth();
+  const { currentProfile } = useSupabaseData();
   const location = useLocation();
 
-  const handleLogout = () => {
-    setCurrentUser(null);
+  const handleLogout = async () => {
+    await signOut();
   };
 
-  const switchRole = () => {
-    if (currentUser?.role === 'manager') {
-      setCurrentUser({
-        id: '1',
-        email: 'john.doe@company.com',
-        name: 'John Doe',
-        role: 'engineer'
-      });
-    } else {
-      setCurrentUser({
-        id: 'manager1',
-        email: 'manager@company.com',
-        name: 'Alex Manager',
-        role: 'manager'
-      });
-    }
-  };
-
-  if (!currentUser) {
+  if (!user || !currentProfile) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow-lg">
-          <div className="text-center">
-            <h2 className="text-3xl font-bold text-gray-900">Engineering Resource Management</h2>
-            <p className="mt-2 text-gray-600">Sign in to your account</p>
-          </div>
-          <div className="space-y-4">
-            <Button 
-              onClick={() => setCurrentUser({
-                id: 'manager1',
-                email: 'manager@company.com',
-                name: 'Alex Manager',
-                role: 'manager'
-              })}
-              className="w-full"
-            >
-              Sign in as Manager
-            </Button>
-            <Button 
-              onClick={() => setCurrentUser({
-                id: '1',
-                email: 'john.doe@company.com',
-                name: 'John Doe',
-                role: 'engineer'
-              })}
-              variant="outline"
-              className="w-full"
-            >
-              Sign in as Engineer
-            </Button>
-          </div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
         </div>
       </div>
     );
   }
 
-  const navigation = currentUser.role === 'manager' 
+  const navigation = currentProfile.role === 'manager' 
     ? [
         { name: 'Dashboard', href: '/', icon: Users },
         { name: 'Engineers', href: '/engineers', icon: User },
@@ -119,15 +76,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
                 <span className="text-sm text-gray-700">
-                  {currentUser.name} ({currentUser.role})
+                  {currentProfile.name} ({currentProfile.role})
                 </span>
-                <Button
-                  onClick={switchRole}
-                  variant="outline"
-                  size="sm"
-                >
-                  Switch Role
-                </Button>
                 <Button
                   onClick={handleLogout}
                   variant="ghost"
